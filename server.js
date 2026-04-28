@@ -1,34 +1,31 @@
 const express = require("express");
 const cors = require("cors");
 
+const fetch = global.fetch;
+
 const app = express();
 
 app.use(cors({ origin: "*" }));
-app.use(express.json());
 
 let token = null;
 let tokenTime = 0;
 
-// ===== GET TOKEN =====
-async function getToken(){
-
-  if(token && Date.now() - tokenTime < 3600000){
-    return token;
-  }
+// GET TOKEN
+async function getToken() {
+  if (token && Date.now() - tokenTime < 3600000) return token;
 
   try {
-
     const form = new URLSearchParams();
-    form.append("grant_type","password");
-    form.append("username","yusuf.abdulkareem@kwasu.edu.ng");
-    form.append("password","Yusupher@01");
+    form.append("grant_type", "password");
+    form.append("username", "yusuf.abdulkareem@kwasu.edu.ng");
+    form.append("password", "Yusupher@01");
 
-    const res = await fetch("https://api.isda-africa.com/login",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/x-www-form-urlencoded"
+    const res = await fetch("https://api.isda-africa.com/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body:form
+      body: form,
     });
 
     const data = await res.json();
@@ -37,37 +34,29 @@ async function getToken(){
     tokenTime = Date.now();
 
     return token;
-
-  } catch (err) {
-    console.log("Token error:", err);
+  } catch (e) {
+    console.log("TOKEN ERROR:", e);
     return null;
   }
 }
 
-// ===== HOME =====
-app.get("/", (req,res)=>{
+// HOME
+app.get("/", (req, res) => {
   res.send("🌾 Smart Farm Backend Running");
 });
 
-// ===== SOIL API =====
-app.get("/soil", async (req,res)=>{
-
+// SOIL
+app.get("/soil", async (req, res) => {
   try {
-
     const { lat, lon } = req.query;
 
     const t = await getToken();
-
-    if(!t){
-      return res.json({ ph: 6.5 });
-    }
+    if (!t) return res.json({ ph: 6.5 });
 
     const r = await fetch(
       `https://api.isda-africa.com/isdasoil/v2/soilproperty?lat=${lat}&lon=${lon}&property=ph`,
       {
-        headers:{
-          Authorization: "Bearer " + t
-        }
+        headers: { Authorization: "Bearer " + t },
       }
     );
 
@@ -76,16 +65,14 @@ app.get("/soil", async (req,res)=>{
     const ph = d?.property?.ph?.[0]?.value?.value;
 
     res.json({ ph: ph || 6.5 });
-
   } catch (err) {
-    console.log("Soil error:", err);
+    console.log("SOIL ERROR:", err);
     res.json({ ph: 6.5 });
   }
-
 });
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, ()=>{
-  console.log("🌾 Backend running on port", PORT);
+app.listen(PORT, () => {
+  console.log("Backend running on", PORT);
 });
