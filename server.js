@@ -1,16 +1,14 @@
 const express = require("express");
-const fetch = require("node-fetch");
 const cors = require("cors");
+
+const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
 
 const app = express();
 
-// ✅ FIXED CORS (IMPORTANT FOR GITHUB PAGES)
 app.use(cors({
   origin: "*",
-  methods: ["GET", "POST"]
+  methods: ["GET","POST"]
 }));
-
-app.use(express.json());
 
 let token = null;
 let tokenTime = 0;
@@ -23,6 +21,7 @@ async function getToken(){
   }
 
   try {
+
     const form = new URLSearchParams();
     form.append("grant_type","password");
     form.append("username","yusuf.abdulkareem@kwasu.edu.ng");
@@ -49,7 +48,7 @@ async function getToken(){
   }
 }
 
-// ===== SOIL API =====
+// ===== SOIL ENDPOINT =====
 app.get("/soil", async (req,res)=>{
 
   try {
@@ -59,7 +58,7 @@ app.get("/soil", async (req,res)=>{
     const t = await getToken();
 
     if(!t){
-      return res.json({ ph: 6.5, note: "fallback (no token)" });
+      return res.json({ ph: 6.5, note: "no token" });
     }
 
     const r = await fetch(
@@ -75,27 +74,23 @@ app.get("/soil", async (req,res)=>{
 
     const ph = d?.property?.ph?.[0]?.value?.value;
 
-    if(!ph){
-      return res.json({ ph: 6.5, note: "fallback (no data)" });
-    }
-
-    res.json({ ph });
+    res.json({ ph: ph || 6.5 });
 
   } catch (err) {
     console.log("Soil error:", err);
-    res.json({ ph: 6.5, note: "server error fallback" });
+    res.json({ ph: 6.5, note: "error fallback" });
   }
 
 });
 
-// ===== HEALTH CHECK =====
+// ===== HOME =====
 app.get("/", (req,res)=>{
   res.send("🌾 Smart Farm Backend Running");
 });
 
-// ===== START SERVER =====
+// ===== START =====
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, ()=>{
-  console.log("Smart Farm backend running on port", PORT);
+  console.log("Backend running on", PORT);
 });
