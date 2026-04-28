@@ -1,14 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 
-const fetch = (...args) => import("node-fetch").then(({default: fetch}) => fetch(...args));
-
 const app = express();
 
-app.use(cors({
-  origin: "*",
-  methods: ["GET","POST"]
-}));
+app.use(cors({ origin: "*" }));
+app.use(express.json());
 
 let token = null;
 let tokenTime = 0;
@@ -48,24 +44,29 @@ async function getToken(){
   }
 }
 
-// ===== SOIL ENDPOINT =====
+// ===== HOME =====
+app.get("/", (req,res)=>{
+  res.send("🌾 Smart Farm Backend Running");
+});
+
+// ===== SOIL API =====
 app.get("/soil", async (req,res)=>{
 
   try {
 
-    const {lat,lon} = req.query;
+    const { lat, lon } = req.query;
 
     const t = await getToken();
 
     if(!t){
-      return res.json({ ph: 6.5, note: "no token" });
+      return res.json({ ph: 6.5 });
     }
 
     const r = await fetch(
       `https://api.isda-africa.com/isdasoil/v2/soilproperty?lat=${lat}&lon=${lon}&property=ph`,
       {
         headers:{
-          Authorization:"Bearer "+t
+          Authorization: "Bearer " + t
         }
       }
     );
@@ -78,19 +79,13 @@ app.get("/soil", async (req,res)=>{
 
   } catch (err) {
     console.log("Soil error:", err);
-    res.json({ ph: 6.5, note: "error fallback" });
+    res.json({ ph: 6.5 });
   }
 
 });
 
-// ===== HOME =====
-app.get("/", (req,res)=>{
-  res.send("🌾 Smart Farm Backend Running");
-});
-
-// ===== START =====
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, ()=>{
-  console.log("Backend running on", PORT);
+  console.log("🌾 Backend running on port", PORT);
 });
