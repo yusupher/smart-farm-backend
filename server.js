@@ -17,8 +17,8 @@ async function getToken() {
   try {
     const form = new URLSearchParams();
     form.append("grant_type", "password");
-    form.append("username", "yusuf.abdulkareem@kwasu.edu.ng");
-    form.append("password", "Yusupher@01");
+    form.append("username", "mail");
+    form.append("password", "password");
 
     const res = await fetch("https://api.isda-africa.com/login", {
       method: "POST",
